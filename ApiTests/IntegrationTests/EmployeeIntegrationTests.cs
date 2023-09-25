@@ -32,16 +32,17 @@ public class EmployeeIntegrationTests : IntegrationTest
                 LastName = "Morant",
                 Salary = 92365.22m,
                 DateOfBirth = new DateTime(1999, 8, 10),
-                Dependents = new List<GetDependentDto>
+                RelationshipStatus = RelationshipType.Spouse,
+                Spouse = new GetDependentDto
                 {
-                    new()
-                    {
-                        Id = 1,
-                        FirstName = "Spouse",
-                        LastName = "Morant",
-                        Relationship = Relationship.Spouse,
-                        DateOfBirth = new DateTime(1998, 3, 3)
-                    },
+                    Id = 1,
+                    FirstName = "Spouse",
+                    LastName = "Morant",
+                    Relationship = Relationship.Spouse,
+                    DateOfBirth = new DateTime(1998, 3, 3)
+                },
+                Children = new List<GetDependentDto>
+                {
                     new()
                     {
                         Id = 2,
@@ -57,7 +58,7 @@ public class EmployeeIntegrationTests : IntegrationTest
                         LastName = "Morant",
                         Relationship = Relationship.Child,
                         DateOfBirth = new DateTime(2021, 5, 18)
-                    }
+                    },
                 }
             },
             new()
@@ -67,16 +68,14 @@ public class EmployeeIntegrationTests : IntegrationTest
                 LastName = "Jordan",
                 Salary = 143211.12m,
                 DateOfBirth = new DateTime(1963, 2, 17),
-                Dependents = new List<GetDependentDto>
+                RelationshipStatus = RelationshipType.DomesticPartner,
+                DomesticPartner = new GetDependentDto 
                 {
-                    new()
-                    {
-                        Id = 4,
-                        FirstName = "DP",
-                        LastName = "Jordan",
-                        Relationship = Relationship.DomesticPartner,
-                        DateOfBirth = new DateTime(1974, 1, 2)
-                    }
+                    Id = 4,
+                    FirstName = "DP",
+                    LastName = "Jordan",
+                    Relationship = Relationship.DomesticPartner,
+                    DateOfBirth = new DateTime(1974, 1, 2)
                 }
             }
         };
