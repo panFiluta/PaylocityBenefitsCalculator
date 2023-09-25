@@ -70,7 +70,7 @@ namespace Api.Services
                 }
             }
         };
-        public Task<GetEmployeeDto> GetEmployee(int id)
+        public Task<GetEmployeeDto?> GetEmployee(int id)
         {
             var employee = _employees.FirstOrDefault(e => e.Id == id);
             return Task.FromResult(employee);
@@ -81,12 +81,12 @@ namespace Api.Services
             return Task.FromResult(_employees.ToList());
         }
 
-        public Task<GetPaycheckDto> CalculatePaycheck(int id)
+        public Task<GetPaycheckDto?> CalculatePaycheck(int id)
         {
             var employee = _employees.FirstOrDefault(e => e.Id == id);
             if (employee == null)
             {
-                return Task.FromResult<GetPaycheckDto>(null);
+                return Task.FromResult<GetPaycheckDto?>(null);
             }
 
             var paycheckDto = CalculatePaycheck(employee);
@@ -94,7 +94,7 @@ namespace Api.Services
             return Task.FromResult(paycheckDto);
         }
 
-        private GetPaycheckDto CalculatePaycheck(GetEmployeeDto employee)
+        private GetPaycheckDto? CalculatePaycheck(GetEmployeeDto employee)
         {
             // Constants for benefit costs
             decimal baseCostPerMonth = 1000;   // Base cost for benefits per month
@@ -113,15 +113,18 @@ namespace Api.Services
             }
 
             // Calculate dependent costs
-            foreach (var dependent in employee.Children)
+            if(employee != null && employee.Children != null)
             {
-                // Add $200 per month for dependents over 50
-                if (dependent.DateOfBirth.AddYears(50) <= DateTime.Now)
+                foreach (var dependent in employee.Children)
                 {
-                    benefitsCost += dependentOver50CostPerMonth * 12;
-                }
+                    // Add $200 per month for dependents over 50
+                    if (dependent.DateOfBirth.AddYears(50) <= DateTime.Now)
+                    {
+                        benefitsCost += dependentOver50CostPerMonth * 12;
+                    }
 
-                benefitsCost += dependentCostPerMonth * 12; // $600 per month for each dependent
+                    benefitsCost += dependentCostPerMonth * 12; // $600 per month for each dependent
+                }
             }
 
             // Calculate net salary

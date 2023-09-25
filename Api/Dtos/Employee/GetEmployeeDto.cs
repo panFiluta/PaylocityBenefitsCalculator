@@ -11,7 +11,7 @@ public class GetEmployeeDto
     public decimal Salary { get; set; }
     public DateTime DateOfBirth { get; set; }
     public RelationshipType RelationshipStatus { get; set; }
-    public GetDependentDto Spouse { get; set; }
-    public GetDependentDto DomesticPartner { get; set; }
-    public List<GetDependentDto> Children { get; set; }
+    public GetDependentDto? Spouse { get; set; }
+    public GetDependentDto? DomesticPartner { get; set; }
+    public List<GetDependentDto>? Children { get; set; }
 }
