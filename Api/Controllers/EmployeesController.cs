@@ -10,19 +10,9 @@ namespace Api.Controllers;
 [Route("api/v1/[controller]")]
 public class EmployeesController : ControllerBase
 {
-    [SwaggerOperation(Summary = "Get employee by id")]
-    [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<GetEmployeeDto>>> Get(int id)
-    {
-        throw new NotImplementedException();
-    }
-
-    [SwaggerOperation(Summary = "Get all employees")]
-    [HttpGet("")]
-    public async Task<ActionResult<ApiResponse<List<GetEmployeeDto>>>> GetAll()
-    {
-        //task: use a more realistic production approach
-        var employees = new List<GetEmployeeDto>
+        // task: use a more realistic production approach
+        // solution: In-memory list to simulate data storage (we would use a database in a real application).
+        private readonly List<GetEmployeeDto> _employees = new List<GetEmployeeDto>
         {
             new()
             {
@@ -88,12 +78,79 @@ public class EmployeesController : ControllerBase
             }
         };
 
-        var result = new ApiResponse<List<GetEmployeeDto>>
+    [SwaggerOperation(Summary = "Get employee by id")]
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ApiResponse<GetEmployeeDto>>> Get(int id)
+    {
+        var employee = _employees.FirstOrDefault(x => x.Id == id); 
+
+        if(employee == null)
         {
-            Data = employees,
-            Success = true
+            return NotFound(new ApiResponse<GetEmployeeDto> 
+            {
+                Success = false,
+                Message = "Employee not found"            
+            });
+        }
+        return Ok(new ApiResponse<GetEmployeeDto> {Data = employee});
+    }
+
+    [SwaggerOperation(Summary = "Get all employees")]
+    [HttpGet("")]
+    public async Task<ActionResult<ApiResponse<List<GetEmployeeDto>>>> GetAll()
+    {
+        var employees = _employees.ToList();
+        
+        return Ok(new ApiResponse<List<GetEmployeeDto>> {Data = employees});
+    }
+
+    [SwaggerOperation(Summary = "Calculate and get paycheck for an employee")]
+    [HttpGet("{id}/paycheck")]
+    public async Task<ActionResult<ApiResponse<GetPaycheckDto>>> GetPaycheck(int id)
+    {
+        var employee = _employees.FirstOrDefault(e => e.Id == id);
+        if (employee == null)
+        {
+            return NotFound(new ApiResponse<GetPaycheckDto> 
+            { 
+                Success = false, 
+                Message = "Employee not found" 
+            });
+        }
+
+        // Calculate the paycheck based on the provided rules
+        decimal baseCost = 1000; // Base cost for benefits per month
+        decimal additionalCostPerDependent = 600; // Additional cost per dependent per month
+        decimal additionalCostPercentage = 0.02m; // Additional cost for high earners (2% of yearly salary)
+        decimal costForDependentsOver50 = 200; // Additional cost for dependents over 50 years old per month
+
+        decimal annualSalary = employee.Salary * 12; // Calculate annual salary
+
+        // Calculate deductions
+        decimal deductions = (annualSalary > 80000) ? (annualSalary * additionalCostPercentage) : 0;
+
+        // Calculate dependent costs
+        foreach (var dependent in employee.Dependents)
+        {
+            // Add $200 per month for dependents over 50
+            if (dependent.DateOfBirth.AddYears(50) <= DateTime.Now)
+            {
+                deductions += costForDependentsOver50;
+            }
+            // Add $600 per month for each dependent
+            deductions += additionalCostPerDependent;
+        }
+
+        // Calculate net salary
+        decimal netSalary = annualSalary / 12 - deductions;
+
+        var paycheckDto = new GetPaycheckDto
+        {
+            BaseSalary = annualSalary / 12,
+            Deductions = deductions,
+            NetSalary = netSalary
         };
 
-        return result;
+        return Ok(new ApiResponse<GetPaycheckDto> { Data = paycheckDto });
     }
 }
