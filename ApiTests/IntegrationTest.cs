@@ -1,33 +1,18 @@
-using System;
 using System.Net.Http;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit; // To enable use of IClassFixture
 
 namespace ApiTests;
-
-public class IntegrationTest : IDisposable
+public class IntegrationTest : IClassFixture<TestingWebAppFactory<Program>>
 {
-    private HttpClient? _httpClient;
+    protected readonly HttpClient _client;
 
-    protected HttpClient HttpClient
+    public IntegrationTest(TestingWebAppFactory<Program> factory)
     {
-        get
+        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
         {
-            if (_httpClient == default)
-            {
-                _httpClient = new HttpClient
-                {
-                    //task: update your port if necessary
-                    BaseAddress = new Uri("https://localhost:7124")
-                };
-                _httpClient.DefaultRequestHeaders.Add("accept", "text/plain");
-            }
-
-            return _httpClient;
-        }
-    }
-
-    public void Dispose()
-    {
-        HttpClient.Dispose();
+            AllowAutoRedirect = false // permits tests to check the result of the app's first response
+        });
     }
 }
 

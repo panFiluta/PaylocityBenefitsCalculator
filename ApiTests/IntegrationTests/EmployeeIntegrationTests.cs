@@ -11,10 +11,15 @@ namespace ApiTests.IntegrationTests;
 
 public class EmployeeIntegrationTests : IntegrationTest
 {
+    public EmployeeIntegrationTests(TestingWebAppFactory<Program> factory)
+        : base(factory)
+    {
+    }
+
     [Fact]
     public async Task WhenAskedForAllEmployees_ShouldReturnAllEmployees()
     {
-        var response = await HttpClient.GetAsync("/api/v1/employees");
+        var response = await _client.GetAsync("/api/v1/employees");
         var employees = new List<GetEmployeeDto>
         {
             new()
@@ -77,6 +82,68 @@ public class EmployeeIntegrationTests : IntegrationTest
                     Relationship = Relationship.DomesticPartner,
                     DateOfBirth = new DateTime(1974, 1, 2)
                 }
+            },
+            new()
+            {
+                Id = 4,
+                FirstName = "Kobe",
+                LastName = "Bryant",
+                Salary = 123000m,
+                DateOfBirth = new DateTime(1983, 2, 17),
+                RelationshipStatus = RelationshipType.None
+            },
+            new()
+            {
+                Id = 5,
+                FirstName = "Alice",
+                LastName = "Smith",
+                Salary = 70000,
+                DateOfBirth = new DateTime(1970, 1, 1),
+                RelationshipStatus = RelationshipType.Spouse,
+                Spouse = new GetDependentDto
+                {
+                    Id = 5,
+                    FirstName = "Bob",
+                    LastName = "Smith",
+                    Relationship = Relationship.Spouse,
+                    DateOfBirth = new DateTime(1965, 1, 1), // Over 50
+                },
+            },
+            new ()
+            {
+                Id = 6,
+                FirstName = "Kevin",
+                LastName = "Durant",
+                Salary = 72365.22m,
+                DateOfBirth = new DateTime(1999, 8, 10),
+                RelationshipStatus = RelationshipType.Spouse,
+                Spouse = new GetDependentDto
+                {
+                    Id = 6,
+                    FirstName = "Spouse",
+                    LastName = "Durant",
+                    Relationship = Relationship.Spouse,
+                    DateOfBirth = new DateTime(1998, 3, 3)
+                },
+                Children = new List<GetDependentDto>
+                {
+                    new()
+                    {
+                        Id = 7,
+                        FirstName = "Child1",
+                        LastName = "Durant",
+                        Relationship = Relationship.Child,
+                        DateOfBirth = new DateTime(2020, 6, 23)
+                    },
+                    new()
+                    {
+                        Id = 8,
+                        FirstName = "Child2",
+                        LastName = "Durant",
+                        Relationship = Relationship.Child,
+                        DateOfBirth = new DateTime(2021, 5, 18)
+                    },
+                }
             }
         };
         await response.ShouldReturn(HttpStatusCode.OK, employees);
@@ -86,7 +153,7 @@ public class EmployeeIntegrationTests : IntegrationTest
     //task: make test pass
     public async Task WhenAskedForAnEmployee_ShouldReturnCorrectEmployee()
     {
-        var response = await HttpClient.GetAsync("/api/v1/employees/1");
+        var response = await _client.GetAsync("/api/v1/employees/1");
         var employee = new GetEmployeeDto
         {
             Id = 1,
@@ -102,7 +169,7 @@ public class EmployeeIntegrationTests : IntegrationTest
     //task: make test pass
     public async Task WhenAskedForANonexistentEmployee_ShouldReturn404()
     {
-        var response = await HttpClient.GetAsync($"/api/v1/employees/{int.MinValue}");
+        var response = await _client.GetAsync($"/api/v1/employees/{int.MinValue}");
         await response.ShouldReturn(HttpStatusCode.NotFound);
     }
 }

@@ -235,3 +235,4 @@ _Pvt_Extensions
 
 # Rider
 .idea/
+ApiTests/coverage.json

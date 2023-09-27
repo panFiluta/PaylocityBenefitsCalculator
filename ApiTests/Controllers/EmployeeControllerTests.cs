@@ -30,7 +30,7 @@ public class EmployeesControllerTests
         // Arrange: Mock the employee service to return an employee
         var employeeId = 1;
         var employeeDto = new GetEmployeeDto { Id = employeeId };
-        _employeeServiceMock.Setup(service => service.GetEmployee(It.IsAny<int>()))
+        _employeeServiceMock.Setup(service => service.GetEmployeeAsync(It.IsAny<int>()))
             .ReturnsAsync(employeeDto);
 
         // Act: Call the Get method
@@ -54,7 +54,7 @@ public class EmployeesControllerTests
             new GetEmployeeDto { Id = 1 },
             new GetEmployeeDto { Id = 2 }
         };
-        _employeeServiceMock.Setup(service => service.GetAllEmployees())
+        _employeeServiceMock.Setup(service => service.GetAllEmployeesAsync())
             .ReturnsAsync(employees);
 
         // Act: Call the GetAll method
@@ -77,7 +77,7 @@ public class EmployeesControllerTests
         var netSalary = 5000;
         var baseSalary = 60000;
         var employeeDto = new GetEmployeeDto { Id = employeeId, Salary = baseSalary };
-        _employeeServiceMock.Setup(service => service.GetEmployee(employeeId))
+        _employeeServiceMock.Setup(service => service.GetEmployeeAsync(employeeId))
             .ReturnsAsync(employeeDto);
 
         // Mock the CalculatePaycheck method to return a specific paycheck result
@@ -87,7 +87,7 @@ public class EmployeesControllerTests
             Deductions = 1000, 
             NetSalary = netSalary  
         };
-        _employeeServiceMock.Setup(service => service.CalculatePaycheck(employeeDto.Id))
+        _employeeServiceMock.Setup(service => service.CalculatePaycheckAsync(employeeDto.Id))
             .ReturnsAsync(expectedPaycheck);
 
         // Act: Call the GetPaycheck method
