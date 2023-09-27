@@ -8,24 +8,23 @@ namespace Api.Services;
 public class EmployeeService : IEmployeeService
 {
     private readonly BenefitsConfiguration _benefitsConfig;
+    private readonly List<GetEmployeeDto> _employees = new List<GetEmployeeDto>();
 
     public EmployeeService(IOptions<BenefitsConfiguration> benefitsConfig)
     {
         _benefitsConfig = benefitsConfig.Value;
-    }
-
-    private readonly List<GetEmployeeDto> _employees = new List<GetEmployeeDto>
-    {
-        new()
+    
+        AddEmployee(new GetEmployeeDto
         {
             Id = 1,
             FirstName = "LeBron",
             LastName = "James",
             Salary = 75420.99m,
             DateOfBirth = new DateTime(1984, 12, 30),
-            RelationshipStatus = RelationshipType.None,
-        },
-        new()
+            RelationshipStatus = RelationshipType.None
+        });
+
+        AddEmployee(new GetEmployeeDto
         {
             Id = 2,
             FirstName = "Ja",
@@ -60,8 +59,9 @@ public class EmployeeService : IEmployeeService
                     DateOfBirth = new DateTime(2021, 5, 18)
                 },
             }
-        },
-        new()
+        });
+
+        AddEmployee(new GetEmployeeDto
         {
             Id = 3,
             FirstName = "Michael",
@@ -77,8 +77,9 @@ public class EmployeeService : IEmployeeService
                 Relationship = Relationship.DomesticPartner,
                 DateOfBirth = new DateTime(1974, 1, 2)
             }
-        },
-        new()
+        });
+
+        AddEmployee(new GetEmployeeDto
         {
             Id = 4,
             FirstName = "Kobe",
@@ -86,8 +87,9 @@ public class EmployeeService : IEmployeeService
             Salary = 123000m,
             DateOfBirth = new DateTime(1983, 2, 17),
             RelationshipStatus = RelationshipType.None
-        },
-        new()
+        });
+
+        AddEmployee(new GetEmployeeDto
         {
             Id = 5,
             FirstName = "Alice",
@@ -101,10 +103,11 @@ public class EmployeeService : IEmployeeService
                 FirstName = "Bob",
                 LastName = "Smith",
                 Relationship = Relationship.Spouse,
-                DateOfBirth = new DateTime(1965, 1, 1), // Over 50
+                DateOfBirth = new DateTime(1965, 1, 1) // Over 50
             },
-        },
-        new ()
+        });
+
+        AddEmployee(new GetEmployeeDto
         {
             Id = 6,
             FirstName = "Kevin",
@@ -139,8 +142,9 @@ public class EmployeeService : IEmployeeService
                     DateOfBirth = new DateTime(2021, 5, 18)
                 },
             }
-        }
-    };
+        });
+    }
+    
     public Task<GetEmployeeDto?> GetEmployeeAsync(int id)
     {
         var employee = _employees.FirstOrDefault(e => e.Id == id);
@@ -254,4 +258,32 @@ public class EmployeeService : IEmployeeService
 
         return paycheckDto;
     }
+
+    private void AddEmployee(GetEmployeeDto employeeDto)
+    {
+        ValidateEmployee(employeeDto);
+        _employees.Add(employeeDto);
+    }
+
+    /// <summary>
+    /// Method validating that an employee doesn't have both a spouse and a domestic partner
+    /// </summary>
+    /// <param name="employeeDto"></param>
+    /// <exception cref="Exception"></exception>
+    private void ValidateEmployee(GetEmployeeDto employeeDto)
+    {
+        var message = "An employee cannot have both a spouse and a domestic partner.";
+
+        if (employeeDto.RelationshipStatus == RelationshipType.Spouse &&
+            employeeDto.DomesticPartner != null)
+        {
+            throw new Exception(message);
+        }
+        else if (employeeDto.RelationshipStatus == RelationshipType.DomesticPartner &&
+                employeeDto.Spouse != null)
+        {
+            throw new Exception(message);
+        }
+    }
+
 }
