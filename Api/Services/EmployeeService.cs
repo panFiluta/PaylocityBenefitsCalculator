@@ -1,11 +1,19 @@
 using Api.Dtos.Dependent;
 using Api.Dtos.Employee;
 using Api.Models;
+using Microsoft.Extensions.Options;
 
 namespace Api.Services;
 
 public class EmployeeService : IEmployeeService
 {
+    private readonly BenefitsConfiguration _benefitsConfig;
+
+    public EmployeeService(IOptions<BenefitsConfiguration> benefitsConfig)
+    {
+        _benefitsConfig = benefitsConfig.Value;
+    }
+
     private readonly List<GetEmployeeDto> _employees = new List<GetEmployeeDto>
     {
         new()
@@ -14,7 +22,8 @@ public class EmployeeService : IEmployeeService
             FirstName = "LeBron",
             LastName = "James",
             Salary = 75420.99m,
-            DateOfBirth = new DateTime(1984, 12, 30)
+            DateOfBirth = new DateTime(1984, 12, 30),
+            RelationshipStatus = RelationshipType.None,
         },
         new()
         {
@@ -68,6 +77,68 @@ public class EmployeeService : IEmployeeService
                 Relationship = Relationship.DomesticPartner,
                 DateOfBirth = new DateTime(1974, 1, 2)
             }
+        },
+        new()
+        {
+            Id = 4,
+            FirstName = "Kobe",
+            LastName = "Bryant",
+            Salary = 123000m,
+            DateOfBirth = new DateTime(1983, 2, 17),
+            RelationshipStatus = RelationshipType.None
+        },
+        new()
+        {
+            Id = 5,
+            FirstName = "Alice",
+            LastName = "Smith",
+            Salary = 70000,
+            DateOfBirth = new DateTime(1970, 1, 1),
+            RelationshipStatus = RelationshipType.Spouse,
+            Spouse = new GetDependentDto
+            {
+                Id = 5,
+                FirstName = "Bob",
+                LastName = "Smith",
+                Relationship = Relationship.Spouse,
+                DateOfBirth = new DateTime(1965, 1, 1), // Over 50
+            },
+        },
+        new ()
+        {
+            Id = 6,
+            FirstName = "Kevin",
+            LastName = "Durant",
+            Salary = 72365.22m,
+            DateOfBirth = new DateTime(1999, 8, 10),
+            RelationshipStatus = RelationshipType.Spouse,
+            Spouse = new GetDependentDto
+            {
+                Id = 6,
+                FirstName = "Spouse",
+                LastName = "Durant",
+                Relationship = Relationship.Spouse,
+                DateOfBirth = new DateTime(1998, 3, 3)
+            },
+            Children = new List<GetDependentDto>
+            {
+                new()
+                {
+                    Id = 7,
+                    FirstName = "Child1",
+                    LastName = "Durant",
+                    Relationship = Relationship.Child,
+                    DateOfBirth = new DateTime(2020, 6, 23)
+                },
+                new()
+                {
+                    Id = 8,
+                    FirstName = "Child2",
+                    LastName = "Durant",
+                    Relationship = Relationship.Child,
+                    DateOfBirth = new DateTime(2021, 5, 18)
+                },
+            }
         }
     };
     public Task<GetEmployeeDto?> GetEmployeeAsync(int id)
@@ -94,76 +165,91 @@ public class EmployeeService : IEmployeeService
         return Task.FromResult(paycheckDto);
     }
 
-    private GetPaycheckDto? CalculatePaycheck(GetEmployeeDto employee)
+    private decimal CalculateHighEarnerBenefits(GetEmployeeDto employee)
     {
-        // Constants for benefit costs
-        decimal baseCostPerMonth = 1000;   // Base cost for benefits per month
-        decimal dependentCostPerMonth = 600; // Cost for each dependent per month
-        decimal highEarnerPercentage = 0.02m; // Additional cost percentage for high earners
-        decimal dependentOver50CostPerMonth = 200; // Additional cost for dependents over 50
-
-        // Calculate annual salary and benefits cost
-        // I assume the employee salary is yearly salary here
-        // (as confirmed by Jake Langan -Talent Acquisition Partner)
+        decimal benefitsCost = 0m;
         decimal annualSalary = employee.Salary;  
-        decimal benefitsCost = baseCostPerMonth * 12; // Base cost for benefits per year
 
         // Check if the employee is a high earner
-        if (annualSalary > 80000)
+        if (employee.Salary > 80000)
         {
-            benefitsCost += annualSalary * highEarnerPercentage;
+            benefitsCost = annualSalary * _benefitsConfig.HighEarnerPercentage;
         }
+        return benefitsCost;
+    }
 
-        // Calculate child dependent costs
+    private decimal CalculateOldDependentBenefits(GetDependentDto dependent)
+    {
+        decimal benefitsCost = 0m;
+        
+        // Add $200 per month for dependents over 50
+        // Can child be over 50? 
+        // We assume that the answer is yes :D
+        if (dependent.DateOfBirth.AddYears(50) <= DateTime.Now)
+        {
+            benefitsCost += _benefitsConfig.DependentOver50CostPerMonth * 12;
+        }
+        return benefitsCost;
+    }
+
+    private decimal CalculateChildBenefits(GetEmployeeDto employee)
+    {
+        decimal benefitsCost = 0m;
+        
         if(employee != null && employee.Children != null)
         {
             foreach (var child in employee.Children)
             {
-                // Add $200 per month for dependents over 50
-                // Can child be over 50? 
-                // We assume that the answer is yes :D
-                if (child.DateOfBirth.AddYears(50) >= DateTime.Now)
-                {
-                    benefitsCost += dependentOver50CostPerMonth * 12;
-                }
-
-                benefitsCost += dependentCostPerMonth * 12; // $600 per month for each dependent
+                // Can a child dependent be >50? I assume yes :)
+                benefitsCost += CalculateOldDependentBenefits(child);
+                benefitsCost += _benefitsConfig.DependentCostPerMonth * 12; // $600 per month for each dependent
             }
         }
+        return benefitsCost;
+    }
 
-        // Calculate spouse dependent cost
-        if(employee != null && employee.Spouse != null)
+    public decimal CalculatePartnerBenefits(GetEmployeeDto employee)
+    {
+        decimal benefitsCost = 0m;
+        
+        if (employee != null)
         {
-            benefitsCost += dependentCostPerMonth * 12; // $600 per month for each dependent
-
-            // Add $200 per month for spouse dependent over 50
-            if (employee.Spouse.DateOfBirth.AddYears(50) >= DateTime.Now)
+            GetDependentDto? partner = employee.RelationshipStatus switch
             {
-                benefitsCost += dependentOver50CostPerMonth * 12;
-            }
+                RelationshipType.DomesticPartner => employee.DomesticPartner,
+                RelationshipType.Spouse => employee.Spouse,
+                _ => null,
+            };
+            if (partner == null)
+                return benefitsCost;
+            
+            benefitsCost += _benefitsConfig.DependentCostPerMonth * 12; 
+            benefitsCost += CalculateOldDependentBenefits(partner);
         }
+        return benefitsCost;
+    }
 
-        // Calculate domestic partner dependent cost
-        if(employee != null && employee.DomesticPartner != null)
-        {
-            benefitsCost += dependentCostPerMonth * 12; // $600 per month for each dependent
+    private GetPaycheckDto? CalculatePaycheck(GetEmployeeDto employee)
+    {
+        // Calculate annual salary and benefits cost
+        // I assume the employee salary is yearly salary here
+        // (as confirmed by Jake Langan -Talent Acquisition Partner)
+        decimal annualSalary = employee.Salary;  
+        decimal anualBenefitsCost = _benefitsConfig.BaseCostPerMonth * 12; // Base cost for benefits per year
 
-            // Add $200 per month for spouse dependent over 50
-            if (employee.DomesticPartner.DateOfBirth.AddYears(50) >= DateTime.Now)
-            {
-                benefitsCost += dependentOver50CostPerMonth * 12;
-            }
-        }
-
+        anualBenefitsCost += CalculateHighEarnerBenefits(employee);
+        anualBenefitsCost += CalculateChildBenefits(employee);
+        anualBenefitsCost += CalculatePartnerBenefits(employee);
+     
         // Calculate net salary
-        decimal netSalary = annualSalary - benefitsCost;
+        decimal annualNetSalary = annualSalary - anualBenefitsCost;
 
         // Calculate the amount per paycheck (evenly spread deductions) and round to 2 decimal places
         var paycheckDto = new GetPaycheckDto
         {
             BaseSalary = Math.Round(annualSalary/26, 2),
-            Deductions = Math.Round(benefitsCost/26, 2),
-            NetSalary = Math.Round(netSalary/26, 2)
+            Deductions = Math.Round(anualBenefitsCost/26, 2),
+            NetSalary = Math.Round(annualNetSalary/26, 2)
         };
 
         return paycheckDto;
