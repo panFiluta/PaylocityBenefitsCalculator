@@ -1,7 +1,12 @@
 using Api.Services;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var benefitsConfig = new BenefitsConfiguration();
+// Load configuration into a strongly-typed object
+builder.Configuration.GetSection("BenefitsConfiguration").Bind(benefitsConfig);
 
 // Load configuration from appsettings.json
 builder.Configuration.AddJsonFile("appsettings.json");
@@ -9,7 +14,8 @@ builder.Configuration.AddJsonFile("appsettings.json");
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+// Register EmployeeService with benefitsConfig
+builder.Services.AddScoped<IEmployeeService>(provider => new EmployeeService(Options.Create(benefitsConfig)));
 builder.Services.AddScoped<IDependentService, DependentService>();
 
 builder.Services.AddSwaggerGen(c =>
@@ -31,10 +37,6 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-
-// Load configuration into a strongly-typed object
-var benefitsConfig = new BenefitsConfiguration();
-builder.Configuration.GetSection("BenefitsConfiguration").Bind(benefitsConfig);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

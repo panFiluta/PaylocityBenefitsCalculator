@@ -171,7 +171,7 @@ public class EmployeeService : IEmployeeService
         decimal annualSalary = employee.Salary;  
 
         // Check if the employee is a high earner
-        if (employee.Salary > 80000)
+        if (employee.Salary > _benefitsConfig.HighEarnerLimit)
         {
             benefitsCost = annualSalary * _benefitsConfig.HighEarnerPercentage;
         }
