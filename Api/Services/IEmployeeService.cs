@@ -1,11 +1,11 @@
 using Api.Dtos.Employee;
 
-namespace Api.Services
+namespace Api.Services;
+
+public interface IEmployeeService
 {
-    public interface IEmployeeService
-    {
-        Task<GetEmployeeDto?> GetEmployee(int id);
-        Task<List<GetEmployeeDto>> GetAllEmployees();
-        Task<GetPaycheckDto?> CalculatePaycheck(int id);
-    }
+    Task<GetEmployeeDto?> GetEmployeeAsync(int id);
+    Task<List<GetEmployeeDto>> GetAllEmployeesAsync();
+    Task<GetPaycheckDto?> CalculatePaycheckAsync(int id);
 }
+

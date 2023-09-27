@@ -9,6 +9,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IDependentService, DependentService>();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -37,12 +38,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(allowLocalhost);
-
+// HttpsRedirection should preced Cors in request processing pipeline
 app.UseHttpsRedirection();
+
+app.UseCors(allowLocalhost);
 
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
+
+// Necessary to make the class accessible from ApiTests project
+public partial class Program { }

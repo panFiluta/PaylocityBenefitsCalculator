@@ -25,7 +25,7 @@ public class EmployeesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<GetEmployeeDto>>> Get(int id)
     {
-        var employee = await _employeeService.GetEmployee(id);
+        var employee = await _employeeService.GetEmployeeAsync(id);
 
         if(employee == null)
         {
@@ -42,7 +42,7 @@ public class EmployeesController : ControllerBase
     [HttpGet("")]
     public async Task<ActionResult<ApiResponse<List<GetEmployeeDto>>>> GetAll()
     {
-        var employees = await _employeeService.GetAllEmployees();
+        var employees = await _employeeService.GetAllEmployeesAsync();
         
         return Ok(new ApiResponse<List<GetEmployeeDto>> {Data = employees});
     }
@@ -51,7 +51,7 @@ public class EmployeesController : ControllerBase
     [HttpGet("{id}/paycheck")]
     public async Task<ActionResult<ApiResponse<GetPaycheckDto>>> GetPaycheck(int id)
     {
-        var paycheck = await _employeeService.CalculatePaycheck(id);
+        var paycheck = await _employeeService.CalculatePaycheckAsync(id);
 
         if (paycheck == null)
         {
